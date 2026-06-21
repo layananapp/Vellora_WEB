@@ -162,34 +162,38 @@ x-data="{ tab: 'total' }">
                     <h3 class="text-2xl font-bold text-gray-800">Daftar Voucher Diskon</h3>
                     
                     <div class="mt-4 overflow-x-auto rounded-2xl border border-gray-200">
-
-                        <div class="min-w-[650px]">
-                        <div class="grid grid-cols-[1.5fr_1fr_1.2fr_1fr_1.3fr] bg-pink-100 px-5 py-3 font-bold text-sm text-gray-700">
-                            <h3>Nama Voucher</h3>
-                            <h3>Kode</h3>
-                            <h3>Potongan</h3>
-                            <h3>Kuota (Terpakai)</h3>
-                            <h3>Min. Belanja</h3>
-                        </div>
-                        @forelse ($vouchers as $v)
-                            <div class="grid grid-cols-[1.5fr_1fr_1.2fr_1fr_1.3fr] px-5 py-3 border-t border-gray-100 text-sm text-gray-600 items-center">
-                                <span class="font-semibold text-gray-800">{{ $v['voucher_name'] }}</span>
-                                <span class="font-bold text-pink-500">{{ $v['code'] }}</span>
-                                <span>
-                                    @if($v['discount_type'] === 'percentage')
-                                        {{ (float)$v['discount_value'] }}%
-                                    @else
-                                        Rp{{ number_format($v['discount_value'], 0, ',', '.') }}
-                                    @endif
-                                </span>
-                                <span>{{ $v['used'] ?? 0 }} / {{ $v['quota'] }}</span>
-                                <span>Rp{{ number_format($v['minimum_transaction'] ?? 0, 0, ',', '.') }}</span>
-                            </div>
-                        @empty
-                            <div class="p-5 text-center text-gray-400 text-sm">Belum ada voucher dibuat.</div>
-                        @endforelse
-                        </div>
-
+                        <table class="w-full text-left text-sm text-gray-600 border-collapse min-w-[650px]">
+                            <thead>
+                                <tr class="bg-pink-100 font-bold text-gray-700">
+                                    <th class="px-5 py-3.5">Nama Voucher</th>
+                                    <th class="px-5 py-3.5">Kode</th>
+                                    <th class="px-5 py-3.5">Potongan</th>
+                                    <th class="px-5 py-3.5">Kuota (Terpakai)</th>
+                                    <th class="px-5 py-3.5">Min. Belanja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($vouchers as $v)
+                                    <tr class="border-t border-gray-100 hover:bg-gray-50 transition">
+                                        <td class="px-5 py-3.5 font-semibold text-gray-800">{{ $v['voucher_name'] }}</td>
+                                        <td class="px-5 py-3.5 font-bold text-pink-500">{{ $v['code'] }}</td>
+                                        <td class="px-5 py-3.5">
+                                            @if($v['discount_type'] === 'percentage')
+                                                {{ (float)$v['discount_value'] }}%
+                                            @else
+                                                Rp{{ number_format($v['discount_value'], 0, ',', '.') }}
+                                            @endif
+                                        </td>
+                                        <td class="px-5 py-3.5">{{ $v['used'] ?? 0 }} / {{ $v['quota'] }}</td>
+                                        <td class="px-5 py-3.5">Rp{{ number_format($v['minimum_transaction'] ?? 0, 0, ',', '.') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="p-5 text-center text-gray-400">Belum ada voucher dibuat.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
