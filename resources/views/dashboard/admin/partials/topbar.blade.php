@@ -18,11 +18,11 @@
 
         <div class="flex items-center gap-3">
 
-            <img src="https://ui-avatars.com/api/?name={{ urlencode(session('user')['name'] ?? 'Admin') }}&background=FF8FA3&color=fff"
+            <img src="https://ui-avatars.com/api/?name={{ urlencode(session('user.name', 'Admin')) }}&background=FF8FA3&color=fff"
                  class="w-11 h-11 rounded-full object-cover">
 
             <h3 class="font-bold text-base text-gray-800">
-                {{ session('user')['name'] ?? 'Admin' }}
+                {{ session('user.name', 'Admin') }}
             </h3>
 
         </div>

@@ -219,14 +219,23 @@ class AdminController extends Controller
 
             $vouchersResponse = Http::get("{$this->apiUrl}/api/vouchers");
             $vouchers = $vouchersResponse->json('data') ?? [];
+
+            $usersResponse = Http::withHeaders($this->getHeaders())->get("{$this->apiUrl}/api/admin/users");
+            $users = $usersResponse->json('data') ?? [];
         } catch (\Exception $e) {
             $categories = [];
             $vouchers = [];
+            $users = [];
         }
 
+        $buyersCount = collect($users)->where('role', 'buyer')->count();
+        $sellersCount = collect($users)->where('role', 'seller')->count();
+
         return view('dashboard.admin.pengaturan', [
-            'categories' => $categories,
-            'vouchers'   => $vouchers,
+            'categories'    => $categories,
+            'vouchers'      => $vouchers,
+            'buyers_count'  => $buyersCount,
+            'sellers_count' => $sellersCount,
         ]);
     }
 
@@ -292,18 +301,24 @@ class AdminController extends Controller
     public function storeVoucher(Request $request)
     {
         $request->validate([
-            'code'        => ['required', 'string', 'max:50'],
-            'discount'    => ['required', 'numeric', 'min:0'],
-            'quota'       => ['required', 'integer', 'min:1'],
-            'description' => ['nullable', 'string'],
+            'code'                => ['required', 'string', 'max:50'],
+            'voucher_name'        => ['required', 'string', 'max:255'],
+            'discount_type'       => ['required', 'in:percentage,fixed'],
+            'discount_value'      => ['required', 'numeric', 'min:0'],
+            'minimum_transaction' => ['nullable', 'numeric', 'min:0'],
+            'quota'               => ['required', 'integer', 'min:1'],
+            'expired_at'          => ['nullable', 'date'],
         ]);
 
         try {
             $response = Http::withHeaders($this->getHeaders())->post("{$this->apiUrl}/api/admin/vouchers", [
-                'code'        => $request->code,
-                'discount'    => $request->discount,
-                'quota'       => $request->quota,
-                'description' => $request->description,
+                'code'                => $request->code,
+                'voucher_name'        => $request->voucher_name,
+                'discount_type'       => $request->discount_type,
+                'discount_value'      => $request->discount_value,
+                'minimum_transaction' => $request->minimum_transaction ?? 0,
+                'quota'               => $request->quota,
+                'expired_at'          => $request->expired_at,
             ]);
 
             if ($response->successful()) {

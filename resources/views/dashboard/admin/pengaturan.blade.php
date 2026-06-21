@@ -97,13 +97,13 @@ x-data="{ tab: 'total' }">
 
                     <div class="grid grid-cols-3 px-5 py-4 border-t border-gray-100 items-center text-sm">
                         <span class="font-bold text-gray-800">User / Buyer</span>
-                        <span class="text-lg font-bold text-gray-750">1.240 (Simulasi)</span>
+                        <span class="text-lg font-bold text-gray-750">{{ number_format($buyers_count, 0, ',', '.') }}</span>
                         <span class="text-gray-500">Total seluruh pengguna terdaftar</span>
                     </div>
 
                     <div class="grid grid-cols-3 px-5 py-4 border-t border-gray-100 items-center text-sm">
                         <span class="font-bold text-gray-800">Seller / Toko</span>
-                        <span class="text-lg font-bold text-gray-750">320 (Simulasi)</span>
+                        <span class="text-lg font-bold text-gray-750">{{ number_format($sellers_count, 0, ',', '.') }}</span>
                         <span class="text-gray-500">Total seluruh toko yang aktif</span>
                     </div>
                     </div>
@@ -163,19 +163,27 @@ x-data="{ tab: 'total' }">
                     
                     <div class="mt-4 overflow-x-auto rounded-2xl border border-gray-200">
 
-                        <div class="min-w-[500px]">
-                        <div class="grid grid-cols-[1.5fr_1.5fr_1fr_1.2fr] bg-pink-100 px-5 py-3 font-bold text-sm text-gray-700">
+                        <div class="min-w-[650px]">
+                        <div class="grid grid-cols-[1.5fr_1fr_1.2fr_1fr_1.3fr] bg-pink-100 px-5 py-3 font-bold text-sm text-gray-700">
+                            <h3>Nama Voucher</h3>
                             <h3>Kode</h3>
-                            <h3>Potongan (Rp)</h3>
-                            <h3>Kuota</h3>
-                            <h3>Deskripsi</h3>
+                            <h3>Potongan</h3>
+                            <h3>Kuota (Terpakai)</h3>
+                            <h3>Min. Belanja</h3>
                         </div>
                         @forelse ($vouchers as $v)
-                            <div class="grid grid-cols-[1.5fr_1.5fr_1fr_1.2fr] px-5 py-3 border-t border-gray-100 text-sm text-gray-600">
+                            <div class="grid grid-cols-[1.5fr_1fr_1.2fr_1fr_1.3fr] px-5 py-3 border-t border-gray-100 text-sm text-gray-600 items-center">
+                                <span class="font-semibold text-gray-800">{{ $v['voucher_name'] }}</span>
                                 <span class="font-bold text-pink-500">{{ $v['code'] }}</span>
-                                <span>Rp{{ number_format($v['discount'], 0, ',', '.') }}</span>
-                                <span>{{ $v['quota'] }}</span>
-                                <span class="truncate pr-2">{{ $v['description'] ?? '-' }}</span>
+                                <span>
+                                    @if($v['discount_type'] === 'percentage')
+                                        {{ (float)$v['discount_value'] }}%
+                                    @else
+                                        Rp{{ number_format($v['discount_value'], 0, ',', '.') }}
+                                    @endif
+                                </span>
+                                <span>{{ $v['used'] ?? 0 }} / {{ $v['quota'] }}</span>
+                                <span>Rp{{ number_format($v['minimum_transaction'] ?? 0, 0, ',', '.') }}</span>
                             </div>
                         @empty
                             <div class="p-5 text-center text-gray-400 text-sm">Belum ada voucher dibuat.</div>
@@ -192,6 +200,16 @@ x-data="{ tab: 'total' }">
                     <form action="{{ route('admin.store-voucher') }}" method="POST" class="space-y-4">
                         @csrf
                         <div>
+                            <label class="block text-sm font-semibold mb-2">Nama Voucher</label>
+                            <input
+                            type="text"
+                            name="voucher_name"
+                            required
+                            placeholder="Contoh: Diskon Gajian"
+                            class="w-full border-2 border-gray-400 rounded-full px-5 py-2.5 outline-none text-sm">
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-semibold mb-2">Kode Voucher</label>
                             <input
                             type="text"
@@ -202,12 +220,32 @@ x-data="{ tab: 'total' }">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold mb-2">Nominal Diskon (Rp)</label>
+                            <label class="block text-sm font-semibold mb-2">Tipe Diskon</label>
+                            <select
+                            name="discount_type"
+                            required
+                            class="w-full border-2 border-gray-400 rounded-full px-5 py-2.5 outline-none text-sm bg-white">
+                                <option value="fixed">Nominal Tetap (Rupiah)</option>
+                                <option value="percentage">Persentase (%)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Nominal / Persentase Diskon</label>
                             <input
                             type="number"
-                            name="discount"
+                            name="discount_value"
                             required
-                            placeholder="Contoh: 50000"
+                            placeholder="Contoh: 50000 atau 10"
+                            class="w-full border-2 border-gray-400 rounded-full px-5 py-2.5 outline-none text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Minimal Transaksi (Rupiah, Opsional)</label>
+                            <input
+                            type="number"
+                            name="minimum_transaction"
+                            placeholder="Contoh: 100000"
                             class="w-full border-2 border-gray-400 rounded-full px-5 py-2.5 outline-none text-sm">
                         </div>
 
@@ -222,12 +260,11 @@ x-data="{ tab: 'total' }">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold mb-2">Deskripsi (Opsional)</label>
-                            <textarea
-                            name="description"
-                            placeholder="Deskripsi voucher..."
-                            rows="2"
-                            class="w-full border-2 border-gray-400 rounded-2xl px-5 py-3 outline-none text-sm resize-none"></textarea>
+                            <label class="block text-sm font-semibold mb-2">Tanggal Kedaluwarsa (Opsional)</label>
+                            <input
+                            type="date"
+                            name="expired_at"
+                            class="w-full border-2 border-gray-400 rounded-full px-5 py-2.5 outline-none text-sm">
                         </div>
 
                         <button type="submit" class="w-full bg-[#FF8FA3] hover:bg-pink-400 text-white font-bold py-2.5 rounded-full text-sm transition">
@@ -244,7 +281,7 @@ x-data="{ tab: 'total' }">
 
                 <div class="flex flex-col sm:flex-row items-start gap-10 mt-8">
                     <div class="relative flex-shrink-0">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode(session('user')['name'] ?? 'Admin') }}&background=FF8FA3&color=fff&size=120"
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode(session('user.name', 'Admin')) }}&background=FF8FA3&color=fff&size=120"
                              class="w-28 h-28 rounded-full object-cover">
                     </div>
 
@@ -254,7 +291,7 @@ x-data="{ tab: 'total' }">
                             <input
                                 type="text"
                                 readonly
-                                value="{{ session('user')['name'] ?? 'Admin' }}"
+                                value="{{ session('user.name', 'Admin') }}"
                                 class="w-full border-2 border-gray-200 rounded-full px-5 py-2.5 outline-none bg-gray-50 text-gray-800 cursor-not-allowed">
                         </div>
 
@@ -263,7 +300,7 @@ x-data="{ tab: 'total' }">
                             <input
                                 type="email"
                                 readonly
-                                value="{{ session('user')['email'] ?? 'admin@vellora.com' }}"
+                                value="{{ session('user.email', 'admin@vellora.com') }}"
                                 class="w-full border-2 border-gray-200 rounded-full px-5 py-2.5 outline-none bg-gray-50 text-gray-800 cursor-not-allowed">
                         </div>
                     </div>
